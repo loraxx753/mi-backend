@@ -3,10 +3,36 @@
 import swisseph from 'swisseph';
 import colors from 'ansi-colors';
 import * as positions from '../lib/constants/SwissEphemerisObjectIds.js';
+import { getZodiacFromLongitude } from './calculate/astrology.js';
 
 // Set Swiss Ephemeris data path
 // swisseph.swe_set_ephe_path('./node_modules/swisseph/ephe');
 
+export function getSwissEphPlanetPositions(jd: number) {
+  const results: Record<string, any> = {};
+  
+  // Get main planets
+  Object.entries(positions.planets).forEach(([name, id]) => {
+    if (name === 'earth') return; // Skip Earth
+    
+    const res = swisseph.swe_calc_ut(
+      jd,
+      id,
+      swisseph.SEFLG_SWIEPH | swisseph.SEFLG_SPEED
+    );
+    
+    if ('longitude' in res) {
+      results[name] = {
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        longitude: res.longitude,
+        latitude: res.latitude,
+        speed: res.longitudeSpeed,
+      };
+    }
+  });
+
+  return results;
+}
 
 export async function getSwissEphHouses(
     jd: number,

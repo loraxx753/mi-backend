@@ -1,20 +1,20 @@
+scalar JSON
+
 type ClientChart {
   id: ID!
   name: String!
   birthDate: String!
   birthTime: String!
-  location: Location!
+  location: BirthLocation!
   chartData: JSON!
   createdAt: String!
 }
 
-type Location {
+type BirthLocation {
   city: String
   country: String
   state: String
 }
-
-scalar JSON
 
 type Planet {
   name: String!
@@ -39,13 +39,34 @@ type HousePositionsResult {
 }
 
 type Query {
-  birthChart(id: ID!): ClientChart
+  birthChart(uid: ID!): ClientChart
   birthCharts: [ClientChart!]
   planetaryPositions(date: String!, time: String!, latitude: Float, longitude: Float, city: String, region: String, country: String): [CelestialBodyPosition!]!
   latLongFromLocation(city: String!, country: String!, region: String): LatLongResult!
-  locationFromLatLong(latitude: Float!, longitude: Float!): Location!
+  locationFromLatLong(latitude: Float!, longitude: Float!): BirthLocation!
   housePositions(date: String!, time: String!, latitude: Float!, longitude: Float!): HousePositionsResult!
+  reading(uid: String!, name: String!, date: String!, time: String!, latitude: Float!, longitude: Float!): Reading!
 }
+
+type Location {
+  city: String
+  country: String
+  state: String
+  latitude: Float!
+  longitude: Float!
+  timezone: String
+}
+
+type Reading {
+  id: ID!
+  uid: String!
+  name: String!
+  date: String!
+  time: String!
+  location: Location!
+  birthChart: BirthChartReading!
+}
+
 
 type Mutation {
   createClientChart(
@@ -68,11 +89,8 @@ input LocationInput {
 }
 
 type BirthChartReading {
-    id: ID!
-    name: String!
-}
-
-type Reading {
+    houses: [House!]!
+    signs: [Sign!]!
     celestialBodyPositions: [CelestialBodyPosition!]!
 }
 
