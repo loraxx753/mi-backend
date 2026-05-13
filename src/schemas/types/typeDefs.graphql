@@ -1,139 +1,18 @@
-scalar JSON
-
-type ClientChart {
-  id: ID!
-  name: String!
-  birthDate: String!
-  birthTime: String!
-  location: BirthLocation!
-  chartData: JSON!
+type ExampleMetadata {
+  owner: String!
   createdAt: String!
 }
 
-type BirthLocation {
-  city: String
-  country: String
-  state: String
-}
-
-type Planet {
-  name: String!
-  houseNumber: Int!
-}
-
-type HouseResults {
-  houses: [House!]!
-  planets: [Planet!]!
-}
-
-type HousePositionsResult {
-  house: [Float!]!
-  ascendant: Float!
-  mc: Float!
-  armc: Float!
-  vertex: Float!
-  equatorialAscendant: Float!
-  kochCoAscendant: Float!
-  munkaseyCoAscendant: Float!
-  munkaseyPolarAscendant: Float!
+type Example {
+  title: String!
+  description: String
+  tags: [String!]!
+  isActive: Boolean!
+  metadata: ExampleMetadata!
 }
 
 type Query {
-  birthChart(uid: ID!): ClientChart
-  birthCharts: [ClientChart!]
-  planetaryPositions(date: String!, time: String!, latitude: Float, longitude: Float, city: String, region: String, country: String): [CelestialBodyPosition!]!
-  latLongFromLocation(city: String!, country: String!, region: String): LatLongResult!
-  locationFromLatLong(latitude: Float!, longitude: Float!): BirthLocation!
-  housePositions(date: String!, time: String!, latitude: Float!, longitude: Float!): HousePositionsResult!
-  reading(uid: String!, name: String!, date: String!, time: String!, latitude: Float!, longitude: Float!): Reading!
-}
-
-type Location {
-  city: String
-  country: String
-  state: String
-  latitude: Float!
-  longitude: Float!
-  timezone: String
-}
-
-type Reading {
-  id: ID!
-  uid: String!
-  name: String!
-  date: String!
-  time: String!
-  location: Location!
-  birthChart: BirthChartReading!
-}
-
-
-type Mutation {
-  createClientChart(
-    name: String!
-    birthDate: String!
-    birthTime: String!
-    location: LocationInput!
-    chartData: JSON!
-  ): ClientChart
-  deleteClientChart(id: ID!): ClientChart
-}
-
-input LocationInput {
-  city: String
-  country: String
-  state: String
-  latitude: Float!
-  longitude: Float!
-  timezone: String
-}
-
-type BirthChartReading {
-    houses: [House!]!
-    signs: [Sign!]!
-    celestialBodyPositions: [CelestialBodyPosition!]!
-}
-
-type House {
-    houseNumber: Int!
-    sign: String!
-    cusp: DegreeDetail!
-}
-
-type Sign {
-    name: String!
-    element: String!
-    modality: String!
-    rulingPlanet: String!
-}
-
-type DegreeDetail {
-    decimal: Float!
-    degrees: Degree!
-}
-
-type Degree {
-    whole: Int!
-    minutes: Int!
-    seconds: Int!
-    decimal: Float!
-}
-
-type CelestialBodyPosition {
-    name: String!
-    ra: Float!
-    dec: Float!
-    longitude: Float!
-    latitude: Float!
-    dateStr: String!
-    northNodeLongitude: Float
-    southNodeLongitude: Float
-}
-
-type LatLongResult {
-  latitude: Float!
-  longitude: Float!
-  formattedAddress: String
-  confidence: Float
+  example: Example!
+  searchExamples(query: String): [String!]!
 }
 
