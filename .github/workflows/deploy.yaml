@@ -12,18 +12,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install build tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential python3
-      - name: Download Swiss Ephemeris files
-        run: |
-            git clone --depth 1 --filter=blob:none --sparse https://github.com/aloistr/swisseph.git temp-swisseph
-            cd temp-swisseph
-            git sparse-checkout set ephe
-            cp -r ephe ../ephe
-            cd ..
-            rm -rf temp-swisseph
+      - name: Set up Node.js # Fixed typo from 'NoACde.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to Railway
+        uses: railwayapp/railway-deploy-action@v2
+        with:
+          railwayToken: ${{ secrets.RAILWAY_TOKEN }}name: Deploy to Railway
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,6 +46,7 @@ jobs:
         run: npm install
 
       - name: Deploy to Railway
-        uses: railwayapp/railway-deploy-action@v2
+        # The correct repository name is 'deploy-action'
+        uses: railwayapp/deploy-action@v2
         with:
           railwayToken: ${{ secrets.RAILWAY_TOKEN }}
