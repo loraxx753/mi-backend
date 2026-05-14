@@ -1,18 +1,67 @@
-type ExampleMetadata {
-  owner: String!
-  createdAt: String!
+"""
+The specific raw data blocks available from the model.
+"""
+enum ModelComponent {
+  TOKENS
+  ATTENTION_MAP
+  RESIDUAL_STREAM
 }
 
-type Example {
-  title: String!
-  description: String
-  tags: [String!]!
-  isActive: Boolean!
-  metadata: ExampleMetadata!
+"""
+Heavy-duty math tasks offloaded to the Python/GPU bridge.
+This transforms raw tensors into "D3-ready" geometry.
+"""
+enum ComputeTask {
+  PCA_3D
+  COSINE_SIMILARITY
+}
+
+"""
+The results of a 'Digital Autopsy' inspection.
+"""
+type ModelSnapshot {
+  tokens: [String!]
+  # [Head Index][Query][Key]
+  attention: [[[Float!]!]!]
+  # [Token Index][768 Features]
+  residual: [[Float!]!]
+  status: String
+  device: String
+}
+
+"""
+Geometry-ready data for frontend visualization.
+Used to map high-dimensional thoughts to 2D/3D space.
+"""
+type GeometrySnapshot {
+  # For PCA_3D: A list of coordinates [x, y, z] for each token
+  points: [[Float!]!]
+  
+  # For COSINE_SIMILARITY: A square matrix showing token-to-token connections
+  matrix: [[Float!]!]
+  
+  # Metadata for debugging
+  status: String
 }
 
 type Query {
-  example: Example!
-  searchExamples(query: String): [String!]!
-}
+  """
+  Direct inspection of the model's internal state.
+  """
+  inspect(
+    prompt: String!, 
+    layer: Int!, 
+    components: [ModelComponent!]!,
+    customEndpoint: String
+  ): ModelSnapshot!
 
+  """
+  The Compute Bridge: Fetches tensors and performs geometric math in one pass.
+  """
+  compute(
+    prompt: String!,
+    layer: Int!,
+    task: ComputeTask!,
+    customEndpoint: String
+  ): GeometrySnapshot!
+}
