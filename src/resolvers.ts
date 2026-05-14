@@ -1,60 +1,81 @@
 import axios from 'axios';
 
-const INSPECT_URL = "https://loraxx753--mi-observatory-model-analyze.modal.run";
-const COMPUTE_URL = "https://loraxx753--mi-observatory-model-compute-geometry.modal.run";
+// Fallback to your analysis endpoint if the environment variable isn't set
+const DEFAULT_MODAL_URL = process.env.MODAL_ENGINE_URL || "https://loraxx753--mi-observatory-model-analyze.modal.run";
 
 export const resolvers = {
   Query: {
     /**
-     * The primary inspector: Direct GPU connection.
+     * Ignition Check: Verifies the GPU engine is warm and responsive.
      */
-    inspect: async (_: any, { prompt, layer, components, customEndpoint }: any) => {
-      const targetUrl = customEndpoint || INSPECT_URL;
-
-      console.log(`📡 Connection: Fetching tensors from ${targetUrl}`);
-
+    engineStatus: async () => {
       try {
-        const response = await axios.post(targetUrl, { prompt, layer, components });
-        
+        // Calls the /status helper on your Modal engine
+        const response = await axios.get(`${DEFAULT_MODAL_URL}/status`);
         return {
-          ...response.data,
-          status: "Connection Established"
+          isLive: true,
+          modelLoaded: response.data.model || "gpt2-small",
+          gpuType: response.data.gpu || "A10G"
         };
-      } catch (error: any) {
-        console.error("❌ Connection Error:", error.message);
-        throw new Error(`Failed to reach the engine at ${targetUrl}`);
+      } catch (e) {
+        console.error("Linker Error: Remote Brain unreachable");
+        return { isLive: false, modelLoaded: null, gpuType: null };
       }
     },
 
     /**
-     * The Compute Bridge: Offloads geometry math to Python/GPU.
+     * Direct Inspection: Fetches raw activations (Attention, Residuals, Tokens).
      */
-    compute: async (_: any, { prompt, layer, task, customEndpoint }: any) => {
-      const targetUrl = customEndpoint || COMPUTE_URL;
-
-      console.log(`🚀 Connection: Requesting ${task} geometry math`);
-
+    inspect: async (_: any, { prompt, layer, components, customEndpoint }: any) => {
+      const url = customEndpoint || DEFAULT_MODAL_URL;
+      
       try {
-        // We first get the raw data needed for the computation
-        const baseData = await axios.post(INSPECT_URL, { 
-          prompt, 
-          layer, 
-          components: ["RESIDUAL_STREAM"] 
+        console.log(`Mission Control: Requesting Autopsy on Layer ${layer} for "${prompt}"`);
+        
+        const response = await axios.post(url, {
+          prompt,
+          layer,
+          components // Sends the ModelComponent Enum array
         });
 
-        // Then we pass that raw math to the specialized compute endpoint
-        const response = await axios.post(targetUrl, {
-          residual: baseData.data.residual,
-          task
-        });
-
+        // Maps the Python JSON response directly to the ModelSnapshot type
         return {
-          ...response.data,
-          status: `Connection Established: ${task}`
+          tokens: response.data.tokens,
+          attention: response.data.attention,
+          residual: response.data.residual,
+          status: response.data.status,
+          device: response.data.device
         };
       } catch (error: any) {
-        console.error("❌ Compute Error:", error.message);
-        throw new Error("Failed to execute remote geometry math.");
+        console.error("Inspect Failed:", error.message);
+        throw new Error("The Model Brain failed to return a snapshot.");
+      }
+    },
+
+    /**
+     * Geometric Compute: Offloads heavy linear algebra (PCA, Cosine) to the GPU.
+     */
+    compute: async (_: any, { prompt, layer, task, customEndpoint }: any) => {
+      const url = customEndpoint || DEFAULT_MODAL_URL;
+
+      try {
+        console.log(`Mission Control: Requesting ${task} Compute for "${prompt}"`);
+        
+        const response = await axios.post(url, {
+          prompt,
+          layer,
+          task // Sends PCA_3D or COSINE_SIMILARITY
+        });
+
+        // Returns "D3-ready" points or matrices
+        return {
+          points: response.data.points,
+          matrix: response.data.matrix,
+          status: response.data.status
+        };
+      } catch (error: any) {
+        console.error("Compute Failed:", error.message);
+        throw new Error("Geometric math offloading failed on the remote engine.");
       }
     }
   }

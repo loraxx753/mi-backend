@@ -20,6 +20,7 @@ enum ComputeTask {
 The results of a 'Digital Autopsy' inspection.
 """
 type ModelSnapshot {
+  prompt: String
   tokens: [String!]
   # [Head Index][Query][Key]
   attention: [[[Float!]!]!]
@@ -44,7 +45,21 @@ type GeometrySnapshot {
   status: String
 }
 
+"""
+The Ignition status of the remote GPU brain.
+"""
+type EngineStatus {
+  isLive: Boolean!
+  modelLoaded: String
+  gpuType: String
+}
+
 type Query {
+  """
+  The "Ignition" sanity check.
+  """
+  engineStatus: EngineStatus!
+
   """
   Direct inspection of the model's internal state.
   """
