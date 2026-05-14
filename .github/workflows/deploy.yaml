@@ -20,6 +20,6 @@ jobs:
 
       - name: Deploy to Railway
         # The correct repository name is 'deploy-action'
-        uses: railwayapp/deploy-action@v2
+        uses: railwayapp/deploy-action@v1
         with:
           railwayToken: ${{ secrets.RAILWAY_TOKEN }}
