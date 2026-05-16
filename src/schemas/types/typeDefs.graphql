@@ -17,6 +17,15 @@ enum ComputeTask {
 }
 
 """
+Controls where inspect snapshots come from.
+"""
+enum SnapshotSource {
+  MOCK
+  FIXTURE
+  LIVE
+}
+
+"""
 The results of a 'Digital Autopsy' inspection.
 """
 type ModelSnapshot {
@@ -24,10 +33,46 @@ type ModelSnapshot {
   tokens: [String!]
   # [Head Index][Query][Key]
   attention: [[[Float!]!]!]
+  visualizations: Visualizations
   # [Token Index][768 Features]
   residual: [[Float!]!]
   status: String
   device: String
+}
+
+"""
+Persisted inspect snapshot for long-term prompt analysis history.
+"""
+type StoredAnalysis {
+  id: ID!
+  prompt: String!
+  layer: Int!
+  components: [ModelComponent!]!
+  source: SnapshotSource!
+  tokens: [String!]!
+  attention: [[[Float!]!]!]
+  visualizations: Visualizations
+  status: String
+  device: String
+  createdAt: String!
+  updatedAt: String!
+}
+
+"""
+Flattened heatmap cell for attention visualization.
+"""
+type HeatmapCell {
+  head: Int!
+  query: String!
+  key: String!
+  value: Float!
+}
+
+"""
+Derived, frontend-ready visualizations built from raw model tensors.
+"""
+type Visualizations {
+  heatmap: [HeatmapCell!]
 }
 
 """
@@ -67,8 +112,18 @@ type Query {
     prompt: String!, 
     layer: Int!, 
     components: [ModelComponent!]!,
+    source: SnapshotSource,
+    persist: Boolean,
     customEndpoint: String
   ): ModelSnapshot!
+
+  """
+  Fetch recent persisted prompt analyses.
+  """
+  analysisHistory(
+    prompt: String,
+    limit: Int = 20
+  ): [StoredAnalysis!]!
 
   """
   The Compute Bridge: Fetches tensors and performs geometric math in one pass.
